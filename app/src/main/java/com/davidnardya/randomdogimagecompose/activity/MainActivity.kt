@@ -3,23 +3,18 @@ package com.davidnardya.randomdogimagecompose.activity
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import coil.compose.rememberAsyncImagePainter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.davidnardya.randomdogimagecompose.model.Dog
 import com.davidnardya.randomdogimagecompose.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -28,18 +23,47 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var viewModel: MainViewModel
 
+    private val initDogList = mutableListOf<Dog>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
         setContent {
-            GetDog()
+            val dogList by viewModel.getDogListFlow.collectAsState(initial = initDogList)
+            GetDog(dogList = dogList)
         }
     }
 
     @Composable
-    fun GetDog() {
+    fun ShowDogOnScreen(dog: Dog) {
+        Row {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(dog.image)
+                        .build(),
+                        contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+    }
 
-        val coroutineScope = rememberCoroutineScope()
+    @Composable
+    fun GetDog(dogList: List<Dog>) {
+
+        LazyColumn {
+            items(dogList) { dog ->
+                ShowDogOnScreen(dog)
+            }
+        }
+
+        /*val coroutineScope = rememberCoroutineScope()
         val (dog, setDog) = remember { mutableStateOf<Dog?>(null) }
         val getDogOnClick: () -> Unit = {
             coroutineScope.launch {
@@ -49,8 +73,7 @@ class MainActivity : AppCompatActivity() {
 
         Column(
             modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(),
+                .fillMaxSize(),
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -66,18 +89,16 @@ class MainActivity : AppCompatActivity() {
 
         Column(
             modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(),
+                .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Image(
                 painter = rememberAsyncImagePainter(dog?.image),
                 contentDescription = null,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth()
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier.fillMaxSize()
             )
-        }
+        }*/
     }
 }
