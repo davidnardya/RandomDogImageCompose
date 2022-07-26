@@ -30,8 +30,14 @@ class MainActivity : AppCompatActivity() {
 
 
         setContent {
-            val dogList by viewModel.getDogListFlow.collectAsState(initial = initDogList)
-            GetDog(dogList = dogList)
+            //CAN USE THIS
+//            val dogList by viewModel.getDogListFlow.collectAsState(initial = initDogList)
+            //OR THIS
+//            val dogList = viewModel.getDogListFlow.collectAsState(initial = initDogList).value
+//            GetDog(dogList = dogList)
+            //BOTH WORK JUST FINE
+
+            GetDog(dogList = viewModel.getDogListFlow.collectAsState(initial = initDogList).value)
         }
     }
 
