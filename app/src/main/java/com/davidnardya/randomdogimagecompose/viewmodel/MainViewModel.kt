@@ -1,24 +1,38 @@
 package com.davidnardya.randomdogimagecompose.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.davidnardya.randomdogimagecompose.model.Dog
 import com.davidnardya.randomdogimagecompose.repositories.DogRepository
-import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val dogRepository: DogRepository
-): ViewModel() {
-    private suspend fun getDog() = dogRepository.getDog()
+) : ViewModel() {
 
-    val getDogListFlow = flow<List<Dog>> {
-        val dogList = mutableListOf<Dog>()
-        for(i in 1..10) {
-            dogList.add(getDog())
+    private val pages = MutableSharedFlow<Long>(
+        extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    fun getDogsFlow(): Flow<List<Dog>> = dogRepository.getDogsFlow()
+
+    fun doSomething() {
+        pages.tryEmit(System.currentTimeMillis())
+    }
+
+    fun onCreate() {
+        pages.onEach {
+            dogRepository.loadPage(it)
         }
-        emit(dogList)
+            .catch {
+                it.printStackTrace()
+                onCreate()
+                // TODO: show error msg
+            }
+            .launchIn(viewModelScope)
     }
 }
